@@ -6,8 +6,6 @@ require './lib/request'
 class Api < Sinatra::Base
   use Rack::Session::Cookie, :key => 'rack.session', :path => '/', secret: "DSLFJSALDFJLADSFJALSDFJADSLFJADSF"
 
-
-  puts Api.inspect
   def login_required!
     if session[:dev].nil?
       redirect '/'

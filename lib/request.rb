@@ -1,40 +1,48 @@
 require 'httparty'
-require 'json'
-require 'colorize'
-require 'awesome_print'
 
-Request = Struct.new(:method, :url, :user) do
-  BASE_URL = 'https://api.clickbank.com/rest/1.3'
-  def call(verbose = false)
+class Request 
+
+  def initialize(user)
+    @user = user
+    @base_url  = 'https://api.clickbank.com/rest/1.3'
+  end 
+
+  def build(method, url)
+    @method = method
+    @url = url
+  end
+
+  def t
+    puts @method
+    puts @url
+    puts @user
+    puts @base_url
+  end
+
+  def call(accept)
     headers = {}
-    headers['Accept'] = 'application/json'
-    headers['Authorization'] = user.auth_header if user[:authorization].nil?
-    headers['Authorization'] = user[:authorization] unless user[:authorization].nil?
+    headers['Accept'] = accept
+    headers['Authorization'] = @user.auth_header if @user[:authorization].nil?
+    headers['Authorization'] = @user[:authorization] unless @user[:authorization].nil?
+    dest = @base_url + @url
+    res = HTTParty.send(@method.downcase.to_s, dest, :headers => headers)
+    return res
+  end
 
-    dest = BASE_URL + url
-
-    res = HTTParty.send(method.downcase.to_s, dest, :headers => headers)
-
+  def getjson
+    res = self.call('application/json')
     json = res.code == 200 ? JSON.parse(res.body) : ''
-#    if (verbose == true)
-      puts "\n+++++REQUEST (begin) -----------------------------------------------------------------------------------------".yellow
-      puts " Date:           #{Time.now}".blue
-      puts " Test:           #{$test_title}"
-      puts " Request:        #{method.upcase} #{dest}".blue
-      puts " Authorization:  #{user.auth_header} ".blue
-      puts ' Accept:         application/json'.blue
-      puts " Result:         #{res.code} | #{res.message}".send(res.code < 299 ? :green : :red)
-      if res.code.to_i == $expected_result.to_i
-        result = "Good"
-      else
-        result = "Bad"
-      end
-      puts " Body: \n#{res.code == 200 ? JSON.pretty_generate(json) : res.body}".blue
-      #ap res.body
-
-      puts "+++++REQUEST (end) -------------------------------------------------------------------------------------------\n".yellow
- #   end
     return json
   end
-  
+
+  def getxml
+    res = self.call('application/xml')
+    return res
+  end
+
+  def getcvs
+    res = self.call('text/csv')
+    return res
+  end
+
 end
